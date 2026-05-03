@@ -21,6 +21,16 @@
   </header>
 
   <main class="container">
+    <nav class="quick-nav" aria-label="画面内メニュー">
+      <a href="#syncStatusSection">同期</a>
+      <a href="#postFormSection">追加</a>
+      <a href="#filterSection">絞込</a>
+      <a href="#dataToolsSection">データ</a>
+      <a href="#calendarSection">カレンダー</a>
+      <a href="#monthlySummarySection">集計</a>
+      <a href="#postListSection">一覧</a>
+    </nav>
+
     <section class="sync-status-section" id="syncStatusSection" aria-label="クラウド同期ステータス">
       <div class="sync-status-main">
         <div>
@@ -65,7 +75,7 @@
       </article>
     </section>
 
-    <section class="panel">
+    <section class="panel" id="postFormSection">
       <div class="section-title">
         <h2>投稿予定を追加</h2>
         <p>必須項目だけ入れれば登録できます。</p>
@@ -126,7 +136,7 @@
       </form>
     </section>
 
-    <section class="filter-panel" aria-label="投稿の絞り込み">
+    <section class="filter-panel" id="filterSection" aria-label="投稿の絞り込み">
       <div class="filter-group">
         <label>
           <span>アカウント名で絞り込み</span>
@@ -156,7 +166,7 @@
       </div>
     </section>
 
-    <section class="data-tools-section">
+    <section class="data-tools-section" id="dataToolsSection">
       <div class="section-title">
         <h2>データ操作</h2>
         <p>投稿予定をCSVでバックアップできます。</p>
@@ -166,7 +176,7 @@
       </div>
     </section>
 
-    <section class="calendar-section">
+    <section class="calendar-section" id="calendarSection">
       <div class="section-title calendar-title">
         <div>
           <h2>カレンダー</h2>
@@ -190,7 +200,7 @@
       <div id="calendarGrid" class="calendar-grid"></div>
     </section>
 
-    <section class="monthly-summary-section">
+    <section class="monthly-summary-section" id="monthlySummarySection">
       <div class="section-title">
         <h2>月間集計</h2>
         <p id="monthlySummaryText">表示中の月の登録投稿数</p>
@@ -198,7 +208,7 @@
       <div id="monthlySummary" class="monthly-summary"></div>
     </section>
 
-    <section class="post-list-section">
+    <section class="post-list-section" id="postListSection">
       <div class="section-title">
         <h2>投稿一覧</h2>
         <p id="listCountText">0件の投稿予定</p>
