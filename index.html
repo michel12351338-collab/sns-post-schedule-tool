@@ -21,6 +21,23 @@
   </header>
 
   <main class="container">
+    <section class="sync-status-section" id="syncStatusSection" aria-label="クラウド同期ステータス">
+      <div class="sync-status-main">
+        <div>
+          <h2>クラウド同期</h2>
+          <p id="syncStatusMessage">まずクラウドから読み込みしてください。</p>
+        </div>
+        <div class="sync-times">
+          <span id="lastLoadedText">最終読み込み：未実行</span>
+          <span id="lastSavedText">最終保存：未実行</span>
+        </div>
+      </div>
+      <div class="sync-actions">
+        <button type="button" id="cloudLoadButton" class="secondary-button">クラウドから読み込み</button>
+        <button type="button" id="cloudSaveButton" class="primary-button">クラウドに保存</button>
+      </div>
+    </section>
+
     <section class="summary-grid" aria-label="投稿サマリー">
       <article class="summary-card late">
         <span class="summary-label">投稿遅れ</span>

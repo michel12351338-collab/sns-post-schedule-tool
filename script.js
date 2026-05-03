@@ -1,4 +1,5 @@
 const STORAGE_KEY = "sns_post_manager_v1";
+const SYNC_META_KEY = "sns_post_sync_meta_v1";
 
 const STATUSES = [
   "未予約",
@@ -41,6 +42,12 @@ const platformFilterInput = document.getElementById("platformFilter");
 const statusFilterInput = document.getElementById("statusFilter");
 const resetFilterButton = document.getElementById("resetFilterButton");
 const exportCsvButton = document.getElementById("exportCsvButton");
+const syncStatusSection = document.getElementById("syncStatusSection");
+const syncStatusMessage = document.getElementById("syncStatusMessage");
+const lastLoadedText = document.getElementById("lastLoadedText");
+const lastSavedText = document.getElementById("lastSavedText");
+const cloudLoadButton = document.getElementById("cloudLoadButton");
+const cloudSaveButton = document.getElementById("cloudSaveButton");
 const calendarMonthText = document.getElementById("calendarMonthText");
 const calendarGrid = document.getElementById("calendarGrid");
 const prevMonthButton = document.getElementById("prevMonthButton");
@@ -59,6 +66,7 @@ const reservedCount = document.getElementById("reservedCount");
 const analysisCount = document.getElementById("analysisCount");
 
 let posts = loadPosts();
+let syncMeta = loadSyncMeta();
 let editingId = null;
 let displayedMonth = new Date();
 
@@ -122,6 +130,120 @@ function savePosts() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(posts));
 }
 
+function createInitialSyncMeta() {
+  return {
+    lastLoadedAt: "",
+    lastSavedAt: "",
+    hasUnsavedChanges: false
+  };
+}
+
+function loadSyncMeta() {
+  const savedText = localStorage.getItem(SYNC_META_KEY);
+
+  if (!savedText) {
+    return createInitialSyncMeta();
+  }
+
+  try {
+    const savedMeta = JSON.parse(savedText);
+
+    return {
+      lastLoadedAt: savedMeta.lastLoadedAt || "",
+      lastSavedAt: savedMeta.lastSavedAt || "",
+      hasUnsavedChanges: Boolean(savedMeta.hasUnsavedChanges)
+    };
+  } catch (error) {
+    return createInitialSyncMeta();
+  }
+}
+
+function saveSyncMeta() {
+  localStorage.setItem(SYNC_META_KEY, JSON.stringify(syncMeta));
+}
+
+function formatDateTimeForDisplay(isoText) {
+  if (!isoText) {
+    return "未実行";
+  }
+
+  const date = new Date(isoText);
+
+  if (Number.isNaN(date.getTime())) {
+    return "未実行";
+  }
+
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  const hours = String(date.getHours()).padStart(2, "0");
+  const minutes = String(date.getMinutes()).padStart(2, "0");
+
+  return `${year}/${month}/${day} ${hours}:${minutes}`;
+}
+
+function renderSyncStatusBar() {
+  if (syncMeta.hasUnsavedChanges) {
+    syncStatusMessage.textContent = "未保存の変更あり。作業後にクラウドへ保存してください。";
+    syncStatusSection.classList.add("unsaved");
+  } else if (syncMeta.lastLoadedAt || syncMeta.lastSavedAt) {
+    syncStatusMessage.textContent = "同期状態は保存済みです。";
+    syncStatusSection.classList.remove("unsaved");
+  } else {
+    syncStatusMessage.textContent = "まずクラウドから読み込みしてください。";
+    syncStatusSection.classList.remove("unsaved");
+  }
+
+  lastLoadedText.textContent = `最終読み込み：${formatDateTimeForDisplay(syncMeta.lastLoadedAt)}`;
+  lastSavedText.textContent = `最終保存：${formatDateTimeForDisplay(syncMeta.lastSavedAt)}`;
+}
+
+function markUnsavedChanges() {
+  syncMeta.hasUnsavedChanges = true;
+  saveSyncMeta();
+  renderSyncStatusBar();
+}
+
+function markCloudLoaded() {
+  syncMeta.lastLoadedAt = new Date().toISOString();
+  syncMeta.hasUnsavedChanges = false;
+  saveSyncMeta();
+  renderSyncStatusBar();
+}
+
+function markCloudSaved() {
+  syncMeta.lastSavedAt = new Date().toISOString();
+  syncMeta.hasUnsavedChanges = false;
+  saveSyncMeta();
+  renderSyncStatusBar();
+}
+
+function handleCloudLoadClick() {
+  const confirmed = confirm(`クラウドの投稿予定で、この端末の投稿予定を置き換える予定の操作です。
+今回はまだ実際の読み込み処理は未実装です。
+同期ステータスだけ更新しますか？`);
+
+  if (!confirmed) {
+    return;
+  }
+
+  markCloudLoaded();
+  alert("今回はまだ実際の読み込み処理は未実装です。同期ステータスだけ更新しました。");
+}
+
+function handleCloudSaveClick() {
+  const confirmed = confirm(`この端末の投稿予定をクラウドに上書き保存する予定の操作です。
+今回はまだ実際の保存処理は未実装です。
+同期ステータスだけ更新しますか？`);
+
+  if (!confirmed) {
+    return;
+  }
+
+  markCloudSaved();
+  alert("今回はまだ実際の保存処理は未実装です。同期ステータスだけ更新しました。");
+}
+
 function createPostId() {
   return `post-${Date.now()}-${Math.random().toString(16).slice(2)}`;
 }
@@ -181,6 +303,7 @@ function handleFormSubmit(event) {
 
   resetForm();
   savePosts();
+  markUnsavedChanges();
   render();
 }
 
@@ -266,6 +389,7 @@ function deletePost(id) {
   }
 
   savePosts();
+  markUnsavedChanges();
   render();
 }
 
@@ -812,6 +936,7 @@ function resetCalendarToCurrentMonth() {
 }
 
 function render() {
+  renderSyncStatusBar();
   updateSummary();
   renderCalendar();
   renderMonthlySummary();
@@ -834,6 +959,8 @@ resetFilterButton.addEventListener("click", () => {
 });
 
 exportCsvButton.addEventListener("click", downloadCsv);
+cloudLoadButton.addEventListener("click", handleCloudLoadClick);
+cloudSaveButton.addEventListener("click", handleCloudSaveClick);
 
 prevMonthButton.addEventListener("click", () => moveCalendarMonth(-1));
 currentMonthButton.addEventListener("click", resetCalendarToCurrentMonth);
@@ -884,6 +1011,15 @@ postList.addEventListener("click", (event) => {
   if (action === "delete") {
     deletePost(id);
   }
+});
+
+window.addEventListener("beforeunload", (event) => {
+  if (!syncMeta.hasUnsavedChanges) {
+    return;
+  }
+
+  event.preventDefault();
+  event.returnValue = "";
 });
 
 render();

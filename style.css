@@ -69,6 +69,58 @@ button {
   margin: 24px 0;
 }
 
+.sync-status-section {
+  margin: 24px 0;
+  padding: 18px 22px;
+  border: 1px solid var(--line);
+  border-left: 6px solid var(--primary);
+  border-radius: 8px;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.sync-status-main {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+
+.sync-status-main h2 {
+  margin: 0 0 4px;
+  font-size: 20px;
+}
+
+#syncStatusMessage {
+  margin: 0;
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.sync-times {
+  display: grid;
+  gap: 4px;
+  color: var(--muted);
+  font-size: 13px;
+  text-align: right;
+}
+
+.sync-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.sync-status-section.unsaved {
+  border-left-color: var(--warning);
+  background: #fffaf0;
+}
+
+.sync-status-section.unsaved #syncStatusMessage {
+  color: var(--warning);
+}
+
 .summary-card {
   min-height: 112px;
   padding: 18px;
@@ -665,6 +717,28 @@ textarea:focus {
   .summary-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 10px;
+  }
+
+  .sync-status-section {
+    padding: 16px;
+  }
+
+  .sync-status-main {
+    display: block;
+  }
+
+  .sync-times {
+    margin-top: 10px;
+    text-align: left;
+  }
+
+  .sync-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .sync-actions button {
+    width: 100%;
   }
 
   .summary-card {
