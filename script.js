@@ -1,5 +1,6 @@
 const STORAGE_KEY = "sns_post_manager_v1";
 const SYNC_META_KEY = "sns_post_sync_meta_v1";
+const CLOUD_API_URL = "https://script.google.com/macros/s/AKfycbzu_T9ryek5HmOegDhVCQ2Qa9grzd3AH_Nf0E9sd9iyO0m0bqbhZ6k2t6O5AwtEz4cE/exec";
 
 const STATUSES = [
   "未予約",
@@ -218,30 +219,93 @@ function markCloudSaved() {
   renderSyncStatusBar();
 }
 
-function handleCloudLoadClick() {
-  const confirmed = confirm(`クラウドの投稿予定で、この端末の投稿予定を置き換える予定の操作です。
-今回はまだ実際の読み込み処理は未実装です。
-同期ステータスだけ更新しますか？`);
-
-  if (!confirmed) {
-    return;
-  }
-
-  markCloudLoaded();
-  alert("今回はまだ実際の読み込み処理は未実装です。同期ステータスだけ更新しました。");
+function setCloudButtonsDisabled(isDisabled) {
+  cloudLoadButton.disabled = isDisabled;
+  cloudSaveButton.disabled = isDisabled;
 }
 
-function handleCloudSaveClick() {
-  const confirmed = confirm(`この端末の投稿予定をクラウドに上書き保存する予定の操作です。
-今回はまだ実際の保存処理は未実装です。
-同期ステータスだけ更新しますか？`);
+async function handleCloudLoadClick() {
+  const confirmMessage = syncMeta.hasUnsavedChanges
+    ? `未保存の変更があります。
+クラウドから読み込むと、この端末の未保存変更が上書きされる可能性があります。
+それでもクラウドから読み込みますか？`
+    : `クラウドの投稿予定で、この端末の投稿予定を置き換えます。
+この端末に未保存の変更がある場合は失われる可能性があります。
+読み込んでもよろしいですか？`;
+  const confirmed = confirm(confirmMessage);
 
   if (!confirmed) {
     return;
   }
 
-  markCloudSaved();
-  alert("今回はまだ実際の保存処理は未実装です。同期ステータスだけ更新しました。");
+  setCloudButtonsDisabled(true);
+
+  try {
+    const response = await fetch(CLOUD_API_URL);
+
+    if (!response.ok) {
+      throw new Error("Cloud load response was not ok.");
+    }
+
+    const data = await response.json();
+
+    if (!data.ok || !Array.isArray(data.posts)) {
+      throw new Error("Cloud load response format was invalid.");
+    }
+
+    posts = data.posts
+      .filter((post) => post && post.id)
+      .map(normalizePost);
+    savePosts();
+    markCloudLoaded();
+    render();
+    alert("クラウドから読み込みました");
+  } catch (error) {
+    // CORSエラーの場合は、Apps Script側の公開設定が「アクセスできるユーザー：全員」になっているか確認してください。
+    alert("クラウドからの読み込みに失敗しました。通信状況やApps ScriptのURLを確認してください。");
+  } finally {
+    setCloudButtonsDisabled(false);
+  }
+}
+
+async function handleCloudSaveClick() {
+  const confirmed = confirm(`この端末の投稿予定をクラウドに上書き保存します。
+Googleスプレッドシート上の投稿予定を置き換えます。
+保存してよろしいですか？`);
+
+  if (!confirmed) {
+    return;
+  }
+
+  setCloudButtonsDisabled(true);
+
+  try {
+    const response = await fetch(CLOUD_API_URL, {
+      method: "POST",
+      body: JSON.stringify({
+        posts: posts.map(normalizePost)
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error("Cloud save response was not ok.");
+    }
+
+    const data = await response.json();
+
+    if (!data.ok) {
+      throw new Error("Cloud save response format was invalid.");
+    }
+
+    markCloudSaved();
+    render();
+    alert("クラウドに保存しました");
+  } catch (error) {
+    // CORSエラーの場合は、Apps Script側の公開設定が「アクセスできるユーザー：全員」になっているか確認してください。
+    alert("クラウドへの保存に失敗しました。通信状況やApps ScriptのURLを確認してください。");
+  } finally {
+    setCloudButtonsDisabled(false);
+  }
 }
 
 function createPostId() {
