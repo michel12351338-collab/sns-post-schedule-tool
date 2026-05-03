@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#20343b">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="SNS投稿管理">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <title>SNS投稿スケジュール管理ツール</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+</head>
+<body>
+  <header class="app-header">
+    <div class="container">
+      <h1>SNS投稿スケジュール管理ツール</h1>
+      <p>投稿予定・予約済み・投稿済みをカレンダーで管理できます</p>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="summary-grid" aria-label="投稿サマリー">
+      <article class="summary-card late">
+        <span class="summary-label">投稿遅れ</span>
+        <strong id="lateCount">0</strong>
+      </article>
+      <article class="summary-card today">
+        <span class="summary-label">今日投稿</span>
+        <strong id="todayCount">0</strong>
+      </article>
+      <article class="summary-card week">
+        <span class="summary-label">今週投稿</span>
+        <strong id="weekCount">0</strong>
+      </article>
+      <article class="summary-card unscheduled">
+        <span class="summary-label">未予約</span>
+        <strong id="unscheduledCount">0</strong>
+      </article>
+      <article class="summary-card reserved">
+        <span class="summary-label">予約済み</span>
+        <strong id="reservedCount">0</strong>
+      </article>
+      <article class="summary-card analysis">
+        <span class="summary-label">分析待ち</span>
+        <strong id="analysisCount">0</strong>
+      </article>
+    </section>
+
+    <section class="panel">
+      <div class="section-title">
+        <h2>投稿予定を追加</h2>
+        <p>必須項目だけ入れれば登録できます。</p>
+      </div>
+
+      <form id="postForm" class="post-form">
+        <div class="form-grid">
+          <label>
+            <span>アカウント名 <em>必須</em></span>
+            <input type="text" id="clientName" autocomplete="off" required>
+          </label>
+
+          <label>
+            <span>企画名 <em>必須</em></span>
+            <input type="text" id="planName" autocomplete="off" required>
+          </label>
+
+          <label>
+            <span>投稿日 <em>必須</em></span>
+            <input type="date" id="postDate" required>
+          </label>
+
+          <label>
+            <span>投稿時間</span>
+            <input type="time" id="postTime">
+          </label>
+
+          <label>
+            <span>投稿媒体 <em>必須</em></span>
+            <select id="platform" required>
+              <option value="Instagram">Instagram</option>
+              <option value="TikTok">TikTok</option>
+              <option value="YouTube Shorts">YouTube Shorts</option>
+              <option value="その他">その他</option>
+            </select>
+          </label>
+
+          <label>
+            <span>ステータス <em>必須</em></span>
+            <select id="status" required>
+              <option value="未予約">未予約</option>
+              <option value="予約済み">予約済み</option>
+              <option value="投稿済み">投稿済み</option>
+              <option value="分析済み">分析済み</option>
+            </select>
+          </label>
+
+          <label class="memo-field">
+            <span>メモ</span>
+            <textarea id="memo" rows="3" placeholder="確認事項や投稿メモを短く残せます"></textarea>
+          </label>
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" id="submitButton" class="primary-button">追加する</button>
+          <button type="button" id="cancelEditButton" class="secondary-button hidden">編集をやめる</button>
+        </div>
+      </form>
+    </section>
+
+    <section class="filter-panel" aria-label="投稿の絞り込み">
+      <div class="filter-group">
+        <label>
+          <span>アカウント名で絞り込み</span>
+          <input type="text" id="clientFilter" placeholder="例：店舗Instagram、採用TikTok、A社リール">
+        </label>
+        <label>
+          <span>投稿媒体で絞り込み</span>
+          <select id="platformFilter">
+            <option value="">すべて</option>
+            <option value="Instagram">Instagram</option>
+            <option value="TikTok">TikTok</option>
+            <option value="YouTube Shorts">YouTube Shorts</option>
+            <option value="その他">その他</option>
+          </select>
+        </label>
+        <label>
+          <span>ステータスで絞り込み</span>
+          <select id="statusFilter">
+            <option value="">すべて</option>
+            <option value="未予約">未予約</option>
+            <option value="予約済み">予約済み</option>
+            <option value="投稿済み">投稿済み</option>
+            <option value="分析済み">分析済み</option>
+          </select>
+        </label>
+        <button type="button" id="resetFilterButton" class="secondary-button">リセット</button>
+      </div>
+    </section>
+
+    <section class="data-tools-section">
+      <div class="section-title">
+        <h2>データ操作</h2>
+        <p>投稿予定をCSVでバックアップできます。</p>
+      </div>
+      <div class="data-tools-actions">
+        <button type="button" id="exportCsvButton" class="secondary-button">CSVエクスポート</button>
+      </div>
+    </section>
+
+    <section class="calendar-section">
+      <div class="section-title calendar-title">
+        <div>
+          <h2>カレンダー</h2>
+          <p id="calendarMonthText">今月の投稿予定</p>
+        </div>
+        <div class="calendar-controls">
+          <button type="button" id="prevMonthButton" class="secondary-button">前月</button>
+          <button type="button" id="currentMonthButton" class="secondary-button">今月</button>
+          <button type="button" id="nextMonthButton" class="secondary-button">翌月</button>
+        </div>
+      </div>
+      <div class="calendar-weekdays" aria-hidden="true">
+        <span>月</span>
+        <span>火</span>
+        <span>水</span>
+        <span>木</span>
+        <span>金</span>
+        <span>土</span>
+        <span>日</span>
+      </div>
+      <div id="calendarGrid" class="calendar-grid"></div>
+    </section>
+
+    <section class="monthly-summary-section">
+      <div class="section-title">
+        <h2>月間集計</h2>
+        <p id="monthlySummaryText">表示中の月の登録投稿数</p>
+      </div>
+      <div id="monthlySummary" class="monthly-summary"></div>
+    </section>
+
+    <section class="post-list-section">
+      <div class="section-title">
+        <h2>投稿一覧</h2>
+        <p id="listCountText">0件の投稿予定</p>
+      </div>
+      <div id="postList" class="post-list" aria-live="polite"></div>
+    </section>
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>
